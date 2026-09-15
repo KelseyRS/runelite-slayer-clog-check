@@ -1,0 +1,6 @@
+# Normalise line endings; keep the shell wrapper runnable on Linux/macOS.
+* text=auto
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary

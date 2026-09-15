@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    maven {
+        url = 'https://repo.runelite.net'
+        content {
+            includeGroupByRegex 'net\\.runelite.*'
+        }
+    }
+    mavenCentral()
+}
+
+group = 'com.slayerclog'
+version = '1.0'
+
+def runeLiteVersion = 'latest.release'
+
+dependencies {
+    compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
