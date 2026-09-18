@@ -31,6 +31,8 @@ public class MonsterMapping
 		String monster;
 		String page;
 		List<Integer> items;
+		// JSON object keys are strings
+		Map<String, String> rates;
 	}
 
 	private final Gson gson;
@@ -85,7 +87,8 @@ public class MonsterMapping
 					final String page = g.page == null ? "Slayer" : g.page;
 					final String monster = g.monster == null ? name : g.monster;
 					groups.add(new ItemGroup(monster, page,
-						Collections.unmodifiableList(new ArrayList<>(g.items))));
+						Collections.unmodifiableList(new ArrayList<>(g.items)),
+						Collections.unmodifiableMap(parseRates(g.rates))));
 				}
 				if (!groups.isEmpty())
 				{
@@ -98,6 +101,27 @@ public class MonsterMapping
 		{
 			log.error("Failed to load monster mapping", ex);
 		}
+	}
+
+	/** Rates keyed by item id; non-numeric keys are skipped. */
+	private static Map<Integer, String> parseRates(Map<String, String> raw)
+	{
+		final Map<Integer, String> rates = new HashMap<>();
+		if (raw != null)
+		{
+			for (Map.Entry<String, String> e : raw.entrySet())
+			{
+				try
+				{
+					rates.put(Integer.parseInt(e.getKey().trim()), e.getValue());
+				}
+				catch (NumberFormatException ignored)
+				{
+					// not an item id
+				}
+			}
+		}
+		return rates;
 	}
 
 	/** All item ids in the mapping. */

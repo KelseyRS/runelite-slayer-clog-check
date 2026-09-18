@@ -32,10 +32,32 @@ public interface SlayerClogConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showSuperior",
+		name = "Show superior drops",
+		description = "Include the Superior section (imbued heart, eternal gem, dust and mist battlestaff) in the task and Mortimer tables.",
+		position = 3
+	)
+	default boolean showSuperior()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showDropRates",
+		name = "Show drop rates",
+		description = "Show each item's drop rate in brackets under its name, for example (1:4000).",
+		position = 4
+	)
+	default boolean showDropRates()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showQuantities",
 		name = "Show quantities",
 		description = "Show how many of each obtained item you have logged.",
-		position = 3
+		position = 5
 	)
 	default boolean showQuantities()
 	{

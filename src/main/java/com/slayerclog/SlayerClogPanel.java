@@ -30,6 +30,8 @@ class SlayerClogPanel extends PluginPanel
 		boolean obtained;
 		int quantity;
 		boolean synced;
+		// drop rate, or null when unknown
+		String rate;
 	}
 
 	/** One monster version and its rows. */
@@ -210,7 +212,28 @@ class SlayerClogPanel extends PluginPanel
 
 		final JLabel name = new JLabel(plain(row.getName()));
 		name.setForeground(row.isObtained() ? Color.WHITE : MISSING);
-		panel.add(name, BorderLayout.CENTER);
+
+		final String rate = row.getRate();
+		if (config.showDropRates() && rate != null && !rate.isEmpty())
+		{
+			// drop rate on a second line under the name
+			final JPanel labels = new JPanel();
+			labels.setLayout(new BoxLayout(labels, BoxLayout.Y_AXIS));
+			name.setAlignmentX(Component.LEFT_ALIGNMENT);
+			labels.add(name);
+
+			final JLabel rateLabel = new JLabel(plain("(" + rate.replace('/', ':') + ")"));
+			rateLabel.setFont(FontManager.getRunescapeSmallFont());
+			rateLabel.setForeground(MISSING);
+			rateLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			labels.add(rateLabel);
+
+			panel.add(labels, BorderLayout.CENTER);
+		}
+		else
+		{
+			panel.add(name, BorderLayout.CENTER);
+		}
 
 		final JLabel status = new JLabel();
 		if (!row.isSynced())

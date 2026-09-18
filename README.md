@@ -10,6 +10,8 @@ usable with other masters.
   ✗ missing, with a keep-or-skip hint.
 - **Mortimer comparison**: when Mortimer offers you a choice of tasks, the panel shows what each
   option could add to your log, side by side.
+- **Drop rates**: optionally put each item's drop rate under its name, for example (1:512)
+- **Hide superior drops**: optionally hide the Superior section from the tables
 - **Live updates**: a newly obtained item ticks immediately from the in-game collection log message;
   opening a collection log page also syncs that page.
 

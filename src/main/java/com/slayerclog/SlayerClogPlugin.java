@@ -74,6 +74,8 @@ public class SlayerClogPlugin extends Plugin
 	private NavigationButton navButton;
 
 	// Chest rewards: Konar tasks give Brimstone keys, Krystilia's wilderness tasks give Larran's keys.
+	// mapping label for a task's shared superior drops
+	private static final String SUPERIOR_LABEL = "Superior";
 	private static final String BRIMSTONE_CHEST = "Brimstone chest";
 	private static final String LARRANS_CHEST = "Larran's chest";
 	private static final int KRYSTILIA_SLAYER_MASTER = 7;
@@ -301,6 +303,10 @@ public class SlayerClogPlugin extends Plugin
 		final List<SlayerClogPanel.Section> sections = new ArrayList<>();
 		for (ItemGroup group : monster.getGroups())
 		{
+			if (!config.showSuperior() && SUPERIOR_LABEL.equals(group.getMonster()))
+			{
+				continue;
+			}
 			final List<SlayerClogPanel.ItemRow> rows = new ArrayList<>();
 			for (int itemId : group.getItems())
 			{
@@ -309,7 +315,8 @@ public class SlayerClogPlugin extends Plugin
 				final boolean synced = status != null;
 				final boolean obtained = Boolean.TRUE.equals(status);
 				final int quantity = clogManager.getQuantity(group.getPage(), itemId);
-				rows.add(new SlayerClogPanel.ItemRow(itemId, name, obtained, quantity, synced));
+				final String rate = group.getRates().get(itemId);
+				rows.add(new SlayerClogPanel.ItemRow(itemId, name, obtained, quantity, synced, rate));
 			}
 			sections.add(new SlayerClogPanel.Section(group.getMonster(), rows));
 		}
