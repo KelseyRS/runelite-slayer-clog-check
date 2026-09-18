@@ -104,7 +104,7 @@ public class CollectionLogManager
 			return;
 		}
 
-		pages.put(pageTitle, pageItems);
+		pages.put(pageKey(pageTitle), pageItems);
 		save();
 	}
 
@@ -124,7 +124,7 @@ public class CollectionLogManager
 		{
 			return Boolean.TRUE;
 		}
-		final Map<Integer, ClogItem> page = pages.get(pageTitle);
+		final Map<Integer, ClogItem> page = pages.get(pageKey(pageTitle));
 		if (page == null)
 		{
 			return null;
@@ -136,7 +136,7 @@ public class CollectionLogManager
 	/** Logged quantity, or 0. */
 	public int getQuantity(String pageTitle, int itemId)
 	{
-		final Map<Integer, ClogItem> page = pages.get(pageTitle);
+		final Map<Integer, ClogItem> page = pages.get(pageKey(pageTitle));
 		if (page == null)
 		{
 			return 0;
@@ -193,7 +193,7 @@ public class CollectionLogManager
 							obtainedItems.add(item.getId());
 						}
 					}
-					pages.put(entry.getKey(), page);
+					pages.put(pageKey(entry.getKey()), page);
 				}
 			}
 			if (data != null && data.obtained != null)
@@ -233,6 +233,12 @@ public class CollectionLogManager
 		{
 			log.warn("Failed to save collection log data", e);
 		}
+	}
+
+	/** Page lookup key: ignores case, spacing and punctuation. */
+	static String pageKey(String title)
+	{
+		return title == null ? "" : title.replaceAll("<[^>]*>", "").toLowerCase().replaceAll("[^a-z0-9]", "");
 	}
 
 	private static File saveFile(long accountHash)

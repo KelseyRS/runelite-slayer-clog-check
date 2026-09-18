@@ -808,8 +808,8 @@
   ],
   "Crazy Archaeologists": [
     {
-      "monster": "Crazy archaeologist",
-      "page": "Crazy archaeologist",
+      "monster": "Crazy Archaeologist",
+      "page": "Crazy Archaeologist",
       "items": [
         11929,
         11932,
@@ -952,10 +952,10 @@
       ]
     }
   ],
-  "Deranged Archaeologist": [
+  "Deranged archaeologist": [
     {
-      "monster": "Deranged Archaeologist",
-      "page": "Deranged Archaeologist",
+      "monster": "Deranged archaeologist",
+      "page": "Deranged archaeologist",
       "items": [
         30895
       ],
@@ -2450,8 +2450,8 @@
       ]
     },
     {
-      "monster": "Thermonuclear smoke devil",
-      "page": "Thermonuclear smoke devil",
+      "monster": "Thermonuclear Smoke Devil",
+      "page": "Thermonuclear Smoke Devil",
       "items": [
         3140,
         11998,
@@ -2974,7 +2974,7 @@
   ],
   "The Thermonuclear Smoke Devil": [
     {
-      "monster": "Thermonuclear smoke devil",
+      "monster": "Thermonuclear Smoke Devil",
       "page": "Slayer",
       "items": [
         3140,
@@ -2986,8 +2986,8 @@
       }
     },
     {
-      "monster": "Thermonuclear smoke devil",
-      "page": "Thermonuclear smoke devil",
+      "monster": "Thermonuclear Smoke Devil",
+      "page": "Thermonuclear Smoke Devil",
       "items": [
         3140,
         11998,
