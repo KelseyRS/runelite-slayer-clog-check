@@ -10,6 +10,7 @@ import com.slayerclog.task.SlayerTaskTracker;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -300,14 +301,16 @@ public class SlayerClogPlugin extends Plugin
 	/** One section per monster version. Client thread only. */
 	private List<SlayerClogPanel.Section> buildSections(SlayerMonster monster)
 	{
-		final List<SlayerClogPanel.Section> sections = new ArrayList<>();
+		// one section per monster, merging its groups; each row keeps its own page
+		final Map<String, List<SlayerClogPanel.ItemRow>> byMonster = new LinkedHashMap<>();
 		for (ItemGroup group : monster.getGroups())
 		{
 			if (!config.showSuperior() && SUPERIOR_LABEL.equals(group.getMonster()))
 			{
 				continue;
 			}
-			final List<SlayerClogPanel.ItemRow> rows = new ArrayList<>();
+			final List<SlayerClogPanel.ItemRow> rows =
+				byMonster.computeIfAbsent(group.getMonster(), k -> new ArrayList<>());
 			for (int itemId : group.getItems())
 			{
 				final String name = itemManager.getItemComposition(itemId).getName();
@@ -316,9 +319,13 @@ public class SlayerClogPlugin extends Plugin
 				final boolean obtained = Boolean.TRUE.equals(status);
 				final int quantity = clogManager.getQuantity(group.getPage(), itemId);
 				final String rate = group.getRates().get(itemId);
-				rows.add(new SlayerClogPanel.ItemRow(itemId, name, obtained, quantity, synced, rate));
+				rows.add(new SlayerClogPanel.ItemRow(itemId, name, obtained, quantity, synced, rate, group.getPage()));
 			}
-			sections.add(new SlayerClogPanel.Section(group.getMonster(), rows));
+		}
+		final List<SlayerClogPanel.Section> sections = new ArrayList<>();
+		for (Map.Entry<String, List<SlayerClogPanel.ItemRow>> e : byMonster.entrySet())
+		{
+			sections.add(new SlayerClogPanel.Section(e.getKey(), e.getValue()));
 		}
 		return sections;
 	}

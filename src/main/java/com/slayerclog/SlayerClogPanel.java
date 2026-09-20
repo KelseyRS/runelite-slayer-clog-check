@@ -32,6 +32,8 @@ class SlayerClogPanel extends PluginPanel
 		boolean synced;
 		// drop rate, or null when unknown
 		String rate;
+		// collection log page this item is on
+		String page;
 	}
 
 	/** One monster version and its rows. */
@@ -251,6 +253,10 @@ class SlayerClogPanel extends PluginPanel
 			status.setText("✗");
 			status.setForeground(MISSING);
 		}
+		// names the page, so the heading does not have to
+		status.setToolTipText(plain(row.isSynced()
+			? "In the " + row.getPage() + " collection log."
+			: "In the " + row.getPage() + " collection log. Open that page to sync."));
 		panel.add(status, BorderLayout.EAST);
 		return panel;
 	}

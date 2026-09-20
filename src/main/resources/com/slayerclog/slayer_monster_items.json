@@ -90,7 +90,7 @@
       ]
     },
     {
-      "monster": "Aquanite (Sailing Miscellaneous)",
+      "monster": "Aquanite",
       "page": "Sailing Miscellaneous",
       "items": [
         31916
@@ -493,16 +493,6 @@
     },
     {
       "monster": "Vorkath",
-      "page": "Slayer",
-      "items": [
-        11286
-      ],
-      "rates": {
-        "11286": "1/5000"
-      }
-    },
-    {
-      "monster": "Vorkath",
       "page": "Vorkath",
       "items": [
         11286,
@@ -621,16 +611,6 @@
       "rates": {
         "11908": "1/200",
         "12004": "1/1200"
-      }
-    },
-    {
-      "monster": "Kraken",
-      "page": "Slayer",
-      "items": [
-        12004
-      ],
-      "rates": {
-        "12004": "1/400"
       }
     },
     {
@@ -860,7 +840,7 @@
       }
     },
     {
-      "monster": "Ancient Custodian (The Hueycoatl)",
+      "monster": "Ancient Custodian",
       "page": "The Hueycoatl",
       "items": [
         30088
@@ -1117,7 +1097,7 @@
       }
     },
     {
-      "monster": "Frost dragon (Sailing Miscellaneous)",
+      "monster": "Frost dragon",
       "page": "Sailing Miscellaneous",
       "items": [
         31406,
@@ -1321,16 +1301,6 @@
       }
     },
     {
-      "monster": "Shellbane gryphon",
-      "page": "Slayer",
-      "items": [
-        31235
-      ],
-      "rates": {
-        "31235": "Always"
-      }
-    },
-    {
       "monster": "Superior",
       "page": "Slayer",
       "items": [
@@ -1484,23 +1454,11 @@
       "page": "Slayer",
       "items": [
         4111,
-        4113,
-        20849,
-        22804,
-        22969,
-        22971,
-        22973,
-        22988
+        4113
       ],
       "rates": {
         "4111": "1/101",
-        "4113": "1/101",
-        "20849": "1/2000",
-        "22804": "1/2001",
-        "22969": "1/181.1",
-        "22971": "1/181.1",
-        "22973": "1/181.1",
-        "22988": "1/513"
+        "4113": "1/101"
       }
     },
     {
@@ -1553,7 +1511,7 @@
       ]
     },
     {
-      "monster": "Ice giant (Champion's Challenge)",
+      "monster": "Ice giant",
       "page": "Champion's Challenge",
       "items": [
         6800
@@ -1703,16 +1661,6 @@
   "Kalphites": [
     {
       "monster": "Kalphite Queen",
-      "page": "Slayer",
-      "items": [
-        3140
-      ],
-      "rates": {
-        "3140": "1/128"
-      }
-    },
-    {
-      "monster": "Kalphite Queen",
       "page": "Kalphite Queen",
       "items": [
         3140,
@@ -1846,7 +1794,7 @@
       }
     },
     {
-      "monster": "Amoxliatl (The Hueycoatl)",
+      "monster": "Amoxliatl",
       "page": "The Hueycoatl",
       "items": [
         30088
@@ -2010,7 +1958,7 @@
       }
     },
     {
-      "monster": "Molanisk (Giant Mole)",
+      "monster": "Molanisk",
       "page": "Giant Mole",
       "items": [
         7416
@@ -2129,7 +2077,7 @@
       }
     },
     {
-      "monster": "Zombie pirate (Champion's Challenge)",
+      "monster": "Zombie pirate",
       "page": "Champion's Challenge",
       "items": [
         6807
@@ -2593,7 +2541,7 @@
       }
     },
     {
-      "monster": "Spiritual mage (Nex)",
+      "monster": "Spiritual mage",
       "page": "Nex",
       "items": [
         26231
@@ -2641,23 +2589,11 @@
       "page": "Slayer",
       "items": [
         4111,
-        4113,
-        20849,
-        22804,
-        22969,
-        22971,
-        22973,
-        22988
+        4113
       ],
       "rates": {
         "4111": "1/101",
-        "4113": "1/101",
-        "20849": "1/2000",
-        "22804": "1/2001",
-        "22969": "1/181.1",
-        "22971": "1/181.1",
-        "22973": "1/181.1",
-        "22988": "1/513"
+        "4113": "1/101"
       }
     },
     {
@@ -2692,16 +2628,6 @@
     }
   ],
   "The Cave Kraken Boss": [
-    {
-      "monster": "Kraken",
-      "page": "Slayer",
-      "items": [
-        12004
-      ],
-      "rates": {
-        "12004": "1/400"
-      }
-    },
     {
       "monster": "Kraken",
       "page": "Kraken",
@@ -2808,16 +2734,6 @@
   "The Kalphite Queen": [
     {
       "monster": "Kalphite Queen",
-      "page": "Slayer",
-      "items": [
-        3140
-      ],
-      "rates": {
-        "3140": "1/128"
-      }
-    },
-    {
-      "monster": "Kalphite Queen",
       "page": "Kalphite Queen",
       "items": [
         3140,
@@ -2838,16 +2754,6 @@
     }
   ],
   "The King Black Dragon": [
-    {
-      "monster": "King Black Dragon",
-      "page": "Slayer",
-      "items": [
-        11286
-      ],
-      "rates": {
-        "11286": "1/5000"
-      }
-    },
     {
       "monster": "King Black Dragon",
       "page": "King Black Dragon",
@@ -2946,16 +2852,6 @@
   ],
   "The Shellbane Gryphon": [
     {
-      "monster": "Shellbane gryphon",
-      "page": "Slayer",
-      "items": [
-        31235
-      ],
-      "rates": {
-        "31235": "Always"
-      }
-    },
-    {
       "monster": "Shellbane Gryphon",
       "page": "Shellbane Gryphon",
       "items": [
@@ -2973,18 +2869,6 @@
     }
   ],
   "The Thermonuclear Smoke Devil": [
-    {
-      "monster": "Thermonuclear Smoke Devil",
-      "page": "Slayer",
-      "items": [
-        3140,
-        12002
-      ],
-      "rates": {
-        "3140": "1/2000",
-        "12002": "1/350"
-      }
-    },
     {
       "monster": "Thermonuclear Smoke Devil",
       "page": "Thermonuclear Smoke Devil",
@@ -3265,16 +3149,6 @@
   "Vorkath": [
     {
       "monster": "Vorkath",
-      "page": "Slayer",
-      "items": [
-        11286
-      ],
-      "rates": {
-        "11286": "1/5000"
-      }
-    },
-    {
-      "monster": "Vorkath",
       "page": "Vorkath",
       "items": [
         11286,
@@ -3376,16 +3250,6 @@
       ],
       "rates": {
         "29455": "1/20000"
-      }
-    },
-    {
-      "monster": "Vorkath",
-      "page": "Slayer",
-      "items": [
-        11286
-      ],
-      "rates": {
-        "11286": "1/5000"
       }
     },
     {
