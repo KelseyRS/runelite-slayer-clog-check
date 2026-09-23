@@ -1,5 +1,6 @@
 package com.slayerclog;
 
+import com.slayerclog.task.KillCountTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -7,6 +8,7 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,10 +20,10 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.AsyncBufferedImage;
 
-/** Sidebar panel. All methods must be called on the EDT. */
+/** Sidebar panel. */
 class SlayerClogPanel extends PluginPanel
 {
-	/** One item row. */
+	/** A single collection log item row. */
 	@Value
 	static class ItemRow
 	{
@@ -30,26 +32,36 @@ class SlayerClogPanel extends PluginPanel
 		boolean obtained;
 		int quantity;
 		boolean synced;
-		// drop rate, or null when unknown
+		/** Drop rate from the mapping, or null when unknown. */
 		String rate;
-		// collection log page this item is on
+		/** Collection log page this item is logged on, shown as a tooltip on its status. */
 		String page;
 	}
 
-	/** One monster version and its rows. */
+	/** One monster version of a task with its item rows. */
 	@Value
 	static class Section
 	{
 		String monster;
 		List<ItemRow> rows;
+		/** Kill count for this monster, or null when unknown or hidden by config. */
+		Integer killCount;
+		/** Superior section only: superiors seen on this task by the plugin's own tally, or null if hidden. */
+		Integer superiorsHere;
+		/** Superior section only: superiors killed on all tasks, from the Slayer kill log, or null. */
+		Integer superiorsTotal;
+		/** The task (or Mortimer option) this section belongs to, named in the per-task superiors line. */
+		String task;
 	}
 
-	/** A Mortimer option. */
+	/** A Mortimer option: an offered task name and its per-monster sections. */
 	@Value
 	static class Option
 	{
 		String name;
 		List<Section> sections;
+		/** Kill count for this task from the Slayer kill log, or null when unknown or hidden by config. */
+		Integer killCount;
 	}
 
 	private static final Color OBTAINED = new Color(76, 175, 80);
@@ -84,11 +96,16 @@ class SlayerClogPanel extends PluginPanel
 		refresh();
 	}
 
-	/** Current task, per monster version. */
-	void showTask(String taskName, int amount, String location, List<Section> sections)
+	/** Current-task view, broken down per monster version. */
+	void showTask(String taskName, int amount, String location, List<Section> sections, Integer killCount)
 	{
 		content.removeAll();
 		content.add(titleLabel(amount > 0 ? taskName + " (" + amount + ")" : taskName));
+		if (killCount != null)
+		{
+			// the title's brackets already hold the kills remaining, so the kill count gets its own line
+			content.add(wrappedText("Kill count: " + formatKills(killCount), MISSING));
+		}
 		if (location != null)
 		{
 			content.add(wrappedText(location, MISSING));
@@ -108,11 +125,15 @@ class SlayerClogPanel extends PluginPanel
 			content.add(sectionPanel(section));
 		}
 
-		content.add(wrappedText(skipHint(all), MISSING));
+		// only a sync prompt; each section's count already shows what is missing
+		if (anyUnsynced(all))
+		{
+			content.add(wrappedText("Sync your collection log for a complete picture.", MISSING));
+		}
 		refresh();
 	}
 
-	/** Mortimer option comparison. */
+	/** Mortimer multi-option comparison view. */
 	void showMortimer(List<Option> options)
 	{
 		content.removeAll();
@@ -128,7 +149,7 @@ class SlayerClogPanel extends PluginPanel
 				BorderFactory.createEmptyBorder(6, 0, 6, 0)));
 			card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-			final JLabel name = new JLabel(plain(option.getName()));
+			final JLabel name = new JLabel(plain(option.getName()) + killCountText(option.getKillCount()));
 			name.setFont(FontManager.getRunescapeBoldFont());
 			name.setForeground(Color.WHITE);
 			name.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -150,7 +171,9 @@ class SlayerClogPanel extends PluginPanel
 		refresh();
 	}
 
-	/** Monster sub-header plus its item rows. */
+	// --- rendering helpers ---
+
+	/** A monster-version section: a sub-header ("Monster x/y") plus its item rows. */
 	private JPanel sectionPanel(Section section)
 	{
 		final JPanel panel = new JPanel();
@@ -174,7 +197,7 @@ class SlayerClogPanel extends PluginPanel
 
 		final JPanel head = new JPanel(new BorderLayout());
 		head.setAlignmentX(Component.LEFT_ALIGNMENT);
-		final JLabel monster = new JLabel(plain(section.getMonster()));
+		final JLabel monster = new JLabel(plain(section.getMonster()) + killCountText(section.getKillCount()));
 		monster.setFont(FontManager.getRunescapeSmallFont());
 		monster.setForeground(new Color(200, 200, 200));
 		head.add(monster, BorderLayout.WEST);
@@ -183,6 +206,23 @@ class SlayerClogPanel extends PluginPanel
 		count.setForeground(obtained == section.getRows().size() && !anyUnsynced ? OBTAINED : MISSING);
 		head.add(count, BorderLayout.EAST);
 		panel.add(head);
+
+		// Superior section: one line per superior count, under the heading
+		if (section.getSuperiorsHere() != null)
+		{
+			panel.add(noteLabel(formatKills(section.getSuperiorsHere()) + " " + plain(section.getTask()) + " "
+				+ superiors(section.getSuperiorsHere())));
+		}
+		if (section.getSuperiorsTotal() != null)
+		{
+			panel.add(noteLabel(formatKills(section.getSuperiorsTotal()) + " " + superiors(section.getSuperiorsTotal())
+				+ " across all tasks"));
+		}
+		if (section.getSuperiorsHere() != null || section.getSuperiorsTotal() != null)
+		{
+			// a small gap so the count lines read as their own block, apart from the item rows below
+			panel.add(Box.createVerticalStrut(4));
+		}
 
 		for (ItemRow row : section.getRows())
 		{
@@ -253,7 +293,7 @@ class SlayerClogPanel extends PluginPanel
 			status.setText("✗");
 			status.setForeground(MISSING);
 		}
-		// names the page, so the heading does not have to
+		// which collection log page this item is on, so the heading does not have to name it
 		status.setToolTipText(plain(row.isSynced()
 			? "In the " + row.getPage() + " collection log."
 			: "In the " + row.getPage() + " collection log. Open that page to sync."));
@@ -261,28 +301,45 @@ class SlayerClogPanel extends PluginPanel
 		return panel;
 	}
 
-	private static String skipHint(List<ItemRow> rows)
+	/** " (1,234 KC)" after a monster, boss or Mortimer option name; empty when unknown. */
+	private static String killCountText(Integer kills)
 	{
-		boolean anyUnsynced = false;
-		boolean anyMissing = false;
+		return kills == null ? "" : " (" + formatKills(kills) + " KC)";
+	}
+
+	private static String superiors(int n)
+	{
+		return n == 1 ? "superior" : "superiors";
+	}
+
+	/** A small muted line under a section heading, indented like the item rows. */
+	private static JLabel noteLabel(String text)
+	{
+		final JLabel label = new JLabel(text);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(MISSING);
+		label.setBorder(BorderFactory.createEmptyBorder(3, 6, 1, 0));
+		label.setAlignmentX(Component.LEFT_ALIGNMENT);
+		return label;
+	}
+
+	/** 1234 -> "1,234"; the kill log stops counting at "Lots!", shown as "65,535+". */
+	private static String formatKills(int kills)
+	{
+		return kills >= KillCountTracker.LOTS ? "65,535+" : String.format("%,d", kills);
+	}
+
+	/** True when any row's status is still unknown because its collection log page has not been opened. */
+	private static boolean anyUnsynced(List<ItemRow> rows)
+	{
 		for (ItemRow row : rows)
 		{
 			if (!row.isSynced())
 			{
-				anyUnsynced = true;
-			}
-			else if (!row.isObtained())
-			{
-				anyMissing = true;
+				return true;
 			}
 		}
-		if (anyUnsynced)
-		{
-			return "Sync your collection log for a complete picture.";
-		}
-		return anyMissing
-			? "You are still missing log items"
-			: "All collection log items collected";
+		return false;
 	}
 
 	private static JLabel titleLabel(String text)
@@ -305,13 +362,13 @@ class SlayerClogPanel extends PluginPanel
 		return label;
 	}
 
-	/** Strips angle brackets so Swing cannot treat the text as HTML. */
+	/** Strips angle brackets so Swing cannot interpret the string as HTML. */
 	private static String plain(String text)
 	{
 		return text == null ? "" : text.replace("<", "").replace(">", "");
 	}
 
-	/** Escapes text embedded in wrappedText's HTML. */
+	/** Escapes text placed in wrappedText's HTML so it renders literally. */
 	private static String escapeHtml(String text)
 	{
 		return text == null ? "" : text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");

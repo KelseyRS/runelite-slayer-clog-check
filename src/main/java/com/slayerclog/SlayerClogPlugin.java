@@ -3,6 +3,7 @@ package com.slayerclog;
 import com.google.inject.Provides;
 import com.slayerclog.clog.CollectionLogManager;
 import com.slayerclog.task.ItemGroup;
+import com.slayerclog.task.KillCountTracker;
 import com.slayerclog.task.MonsterMapping;
 import com.slayerclog.task.MortimerInterfaceHandler;
 import com.slayerclog.task.SlayerMonster;
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ScriptID;
@@ -37,6 +39,7 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
+@Slf4j
 @PluginDescriptor(
 	name = "Slayer Clog Check",
 	description = "Shows collection log progress for your current slayer task, and compares each option at Mortimer.",
@@ -71,21 +74,23 @@ public class SlayerClogPlugin extends Plugin
 	@Inject
 	private MortimerInterfaceHandler mortimer;
 
+	@Inject
+	private KillCountTracker killCounts;
+
 	private SlayerClogPanel panel;
 	private NavigationButton navButton;
 
-	// Chest rewards: Konar tasks give Brimstone keys, Krystilia's wilderness tasks give Larran's keys.
-	// mapping label for a task's shared superior drops
+	// Konar is the only master that assigns an area, and Konar tasks are what yield Brimstone keys.
 	private static final String SUPERIOR_LABEL = "Superior";
 	private static final String BRIMSTONE_CHEST = "Brimstone chest";
 	private static final String LARRANS_CHEST = "Larran's chest";
 	private static final int KRYSTILIA_SLAYER_MASTER = 7;
 
-	// Mortimer state
+	// Mortimer selection state
 	private boolean mortimerActive;
 	private List<String> mortimerOptions;
 
-	// Task polling state
+	// Current-task polling state
 	private String lastTaskName;
 	private int lastAmount = -1;
 
@@ -120,6 +125,7 @@ public class SlayerClogPlugin extends Plugin
 			clientThread.invokeLater(() ->
 			{
 				clogManager.load(client.getAccountHash());
+				killCounts.load(client.getAccountHash());
 				refreshView();
 			});
 		}
@@ -141,6 +147,7 @@ public class SlayerClogPlugin extends Plugin
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			clogManager.load(client.getAccountHash());
+			killCounts.load(client.getAccountHash());
 			refreshView();
 		}
 	}
@@ -151,17 +158,31 @@ public class SlayerClogPlugin extends Plugin
 		if (event.getScriptId() == ScriptID.COLLECTION_DRAW_LIST)
 		{
 			clogManager.captureOpenPage();
+			// boss pages also show "X kills: N" in their header
+			killCounts.captureCollectionLogHeader();
 			refreshView();
 		}
 	}
 
-	/** Ticks an item as soon as the new collection log item message fires. */
+	/** Ticks a newly obtained item from the "New item added to your collection log" message. */
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
 		final String message = event.getMessage();
 		if (message == null)
 		{
+			return;
+		}
+		// "Your X kill count is: N" keeps boss kill counts current between visits to the kill logs
+		if (killCounts.recordKillMessage(message))
+		{
+			refreshView();
+			return;
+		}
+		// "A superior foe has appeared..." is counted against the current task: the game keeps no per-task tally
+		if (killCounts.recordSuperior(message, taskTracker.getCurrentTaskName()))
+		{
+			refreshView();
 			return;
 		}
 		final Matcher m = CLOG_MESSAGE.matcher(message);
@@ -179,7 +200,7 @@ public class SlayerClogPlugin extends Plugin
 		}
 	}
 
-	/** Builds a name to item id index. Client thread only. */
+	/** Lazily build a name -> item id index over every item in the mapping. */
 	private void ensureNameIndex()
 	{
 		if (nameIndexBuilt)
@@ -198,16 +219,23 @@ public class SlayerClogPlugin extends Plugin
 			}
 			catch (Exception ignored)
 			{
-				// no composition
+				// skip ids that have no composition
 			}
 		}
 		nameIndexBuilt = true;
 	}
 
+	/** Polls the Slayer plugin's task config each tick; ConfigChanged is unreliable for it. */
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		// Poll for the Mortimer interface; it does not reliably emit WidgetLoaded.
+		// The Slayer kill log has no varps, so, like the collection log, it is read whenever it is open.
+		if (killCounts.captureKillLog())
+		{
+			refreshView();
+		}
+
+		// Mortimer selection interface: poll it (modal interfaces don't always emit WidgetLoaded).
 		if (config.mortimerView())
 		{
 			final List<String> opts = mortimer.detect(MortimerInterfaceHandler.MORTIMER_GROUP_ID);
@@ -229,7 +257,6 @@ public class SlayerClogPlugin extends Plugin
 			}
 		}
 
-		// Poll the task, stored as per-profile config.
 		final String name = taskTracker.getCurrentTaskName();
 		final int amount = taskTracker.getAmount();
 		if (!Objects.equals(name, lastTaskName) || amount != lastAmount)
@@ -243,13 +270,14 @@ public class SlayerClogPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
+		// our own display options changed
 		if (SlayerClogConfig.GROUP.equals(event.getGroup()))
 		{
 			refreshView();
 		}
 	}
 
-	/** Rebuilds the panel: data on the client thread, UI on the EDT. */
+	/** Rebuild the panel from current state. */
 	private void refreshView()
 	{
 		if (panel == null)
@@ -267,7 +295,8 @@ public class SlayerClogPlugin extends Plugin
 					final SlayerMonster monster = mapping.get(optionName);
 					final List<SlayerClogPanel.Section> sections =
 						monster == null ? new ArrayList<>() : buildSections(monster);
-					options.add(new SlayerClogPanel.Option(optionName, sections));
+					final Integer kills = config.showKillCounts() ? killCounts.get(optionName) : null;
+					options.add(new SlayerClogPanel.Option(optionName, sections, kills));
 				}
 				updatePanel(() -> panel.showMortimer(options));
 				return;
@@ -294,14 +323,15 @@ public class SlayerClogPlugin extends Plugin
 			{
 				addChest(sections, LARRANS_CHEST);
 			}
-			updatePanel(() -> panel.showTask(taskName, amount, location, sections));
+			final Integer kills = config.showKillCounts() ? killCounts.get(taskName) : null;
+			updatePanel(() -> panel.showTask(taskName, amount, location, sections, kills));
 		});
 	}
 
-	/** One section per monster version. Client thread only. */
+	/** Build one display Section per monster version of the task (base monster, Superior, boss). */
 	private List<SlayerClogPanel.Section> buildSections(SlayerMonster monster)
 	{
-		// one section per monster, merging its groups; each row keeps its own page
+		// one section per monster: groups from several pages merge, each row keeps its page
 		final Map<String, List<SlayerClogPanel.ItemRow>> byMonster = new LinkedHashMap<>();
 		for (ItemGroup group : monster.getGroups())
 		{
@@ -315,7 +345,7 @@ public class SlayerClogPlugin extends Plugin
 			{
 				final String name = itemManager.getItemComposition(itemId).getName();
 				final Boolean status = clogManager.isObtained(group.getPage(), itemId);
-				final boolean synced = status != null;
+				final boolean synced = status != null; // null = status still unknown (page not synced)
 				final boolean obtained = Boolean.TRUE.equals(status);
 				final int quantity = clogManager.getQuantity(group.getPage(), itemId);
 				final String rate = group.getRates().get(itemId);
@@ -325,12 +355,23 @@ public class SlayerClogPlugin extends Plugin
 		final List<SlayerClogPanel.Section> sections = new ArrayList<>();
 		for (Map.Entry<String, List<SlayerClogPanel.ItemRow>> e : byMonster.entrySet())
 		{
-			sections.add(new SlayerClogPanel.Section(e.getKey(), e.getValue()));
+			// the task's own kill log count is shown by the task/option name, so sections do not repeat it
+			final Integer kills = config.showKillCounts() ? killCounts.getForSection(e.getKey(), monster.getName()) : null;
+			// Superior section: superiors seen on this task, and the all-task total
+			final boolean superior = SUPERIOR_LABEL.equals(e.getKey());
+			Integer here = null;
+			if (superior && config.showSuperiorTracked())
+			{
+				final Integer seen = killCounts.superiorsOnTask(monster.getName());
+				here = seen == null ? 0 : seen;
+			}
+			final Integer total = superior && config.showSuperiorTotal() ? killCounts.superiorsKilled() : null;
+			sections.add(new SlayerClogPanel.Section(e.getKey(), e.getValue(), kills, here, total, monster.getName()));
 		}
 		return sections;
 	}
 
-	/** Adds a chest entry from the mapping as extra sections. */
+	/** Adds a chest entry from the mapping as extra sections, when its slayer master condition applies. */
 	private void addChest(List<SlayerClogPanel.Section> sections, String key)
 	{
 		final SlayerMonster chest = mapping.get(key);

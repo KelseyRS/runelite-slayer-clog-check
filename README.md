@@ -15,6 +15,18 @@ usable with other masters.
 - **Live updates**: a newly obtained item ticks immediately from the in-game collection log message;
   opening a collection log page also syncs that page.
 
+## Kill counts and superiors
+
+- **Kill counts** come from the game's own logs and are remembered per account. Open the Slayer Kill Log
+  (enchanted gem or slayer ring, "Log") and the Boss Kill Log (ring of wealth, "Boss Log") once; boss counts
+  are also read from collection log pages and each "Your X kill count is" message. The highest number seen
+  is kept.
+- **Superiors across all tasks** is the "Superior creatures" total from the Slayer Kill Log. Open the log to
+  update it.
+- **Superiors per task** is counted by the plugin itself, because the game does not record it: each "A
+  superior foe has appeared..." message adds one to your current task. It starts counting from version
+  1.3, and counts superiors that appeared, not kills.
+
 ## How obtained status is determined
 
 RuneLite cannot read most collection log items from data. This plugin updates  progress from two
